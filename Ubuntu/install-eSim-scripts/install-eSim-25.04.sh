@@ -61,22 +61,29 @@ function createConfigFile
 
 function installNghdl
 {
-
     echo "Installing NGHDL..........................."
-    unzip -o nghdl.zip
-    cd nghdl/
-    chmod +x install-nghdl.sh
 
-    # Do not trap on error of any command. Let NGHDL script handle its own errors.
+    unzip -o nghdl.zip || return 1
+    cd nghdl/ || return 1
+    chmod +x install-nghdl.sh || return 1
+
+    # Run NGHDL and explicitly capture its exit status.
     trap "" ERR
 
-    ./install-nghdl.sh --install       # Install NGHDL
-        
-    # Set trap again to error_exit function to exit on errors
-    trap error_exit ERR
+    if ./install-nghdl.sh --install; then
+        ngspiceFlag=1
+        echo "NGHDL installation completed successfully."
+    else
+        status=$?
+        trap error_exit ERR
+        cd ../
+        echo "ERROR: NGHDL installation failed (exit code: $status)."
+        return "$status"
+    fi
 
-    ngspiceFlag=1
+    trap error_exit ERR
     cd ../
+
 
 }
 
